@@ -1,11 +1,19 @@
+using Microsoft.EntityFrameworkCore;
+
 namespace IaProyectoEventos.Models
 {
     public class Evento
     {
         public int Id { get; set; }
-        public string Titulo { get; set; } = string.Empty;
+        public string Nombre { get; set; } = string.Empty;
         public string Descripcion { get; set; } = string.Empty;
-        public DateTime Fecha { get; set; }
-        public string Lugar { get; set; } = string.Empty;
+        public string Direccion { get; set; } = string.Empty;
+        [Precision(18, 2)]
+        public decimal Costo { get; set; }
+        public DateOnly FechaInicio { get; set; }
+        public DateOnly FechaFin { get; set; }
+        public TimeOnly HoraInicio { get; set; }
+        public TimeOnly HoraFin { get; set; }
+        public bool Estado { get; set; }
     }
 }
