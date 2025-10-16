@@ -14,6 +14,8 @@ namespace IaProyectoEventos.Models
         public DateOnly FechaFin { get; set; }
         public TimeOnly HoraInicio { get; set; }
         public TimeOnly HoraFin { get; set; }
+        public int TipoEventoId { get; set; }
+        public TipoEvento? TipoEvento { get; set; }
         public bool Estado { get; set; }
     }
 }

@@ -9,5 +9,6 @@ namespace IaProyectoEventos.Data
             : base(options) { }
 
         public DbSet<Evento> Eventos { get; set; }
+        public DbSet<IaProyectoEventos.Models.TipoEvento> TipoEventos { get; set; }
     }
 }
