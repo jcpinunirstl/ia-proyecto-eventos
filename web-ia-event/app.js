@@ -4,11 +4,23 @@ class EventoUI {
     constructor() {
         this.eventos = [];
         this.tipoEventos = [];
+        this.personas = [];
+        this.tipoEventosList = [];
         this.modal = document.getElementById('formModal');
         this.form = document.getElementById('eventForm');
         this.formTitle = document.getElementById('formTitle');
         this.eventsBody = document.getElementById('eventsBody');
         this.tipoEventoSelect = document.getElementById('tipoEventoId');
+
+        this.personaModal = document.getElementById('personaModal');
+        this.personaForm = document.getElementById('personaForm');
+        this.personaFormTitle = document.getElementById('personaFormTitle');
+        this.personasBody = document.getElementById('personasBody');
+
+        this.tipoEventoModal = document.getElementById('tipoEventoModal');
+        this.tipoEventoForm = document.getElementById('tipoEventoForm');
+        this.tipoEventoFormTitle = document.getElementById('tipoEventoFormTitle');
+        this.tipoEventosBody = document.getElementById('tipoEventosBody');
 
         this.init();
     }
@@ -16,6 +28,8 @@ class EventoUI {
     async init() {
         await this.loadTipoEventos();
         await this.loadEventos();
+        await this.loadPersonas();
+        await this.loadTipoEventosList();
 
         document.getElementById('createBtn').addEventListener('click', () => this.showCreateForm());
         document.querySelector('.close').addEventListener('click', () => this.hideModal());
@@ -23,6 +37,24 @@ class EventoUI {
         window.addEventListener('click', (e) => {
             if (e.target === this.modal) {
                 this.hideModal();
+            }
+        });
+
+        document.getElementById('createPersonaBtn').addEventListener('click', () => this.showCreatePersonaForm());
+        document.querySelector('.close-persona').addEventListener('click', () => this.hidePersonaModal());
+        this.personaForm.addEventListener('submit', (e) => this.handlePersonaSubmit(e));
+        window.addEventListener('click', (e) => {
+            if (e.target === this.personaModal) {
+                this.hidePersonaModal();
+            }
+        });
+
+        document.getElementById('createTipoEventoBtn').addEventListener('click', () => this.showCreateTipoEventoForm());
+        document.querySelector('.close-tipo-evento').addEventListener('click', () => this.hideTipoEventoModal());
+        this.tipoEventoForm.addEventListener('submit', (e) => this.handleTipoEventoSubmit(e));
+        window.addEventListener('click', (e) => {
+            if (e.target === this.tipoEventoModal) {
+                this.hideTipoEventoModal();
             }
         });
     }
@@ -159,6 +191,206 @@ class EventoUI {
             console.error('Error guardando evento:', error);
             alert(error.message);
         }
+    }
+
+    async loadPersonas() {
+        try {
+            this.personas = await EventoAPI.getPersonas();
+            this.renderPersonas();
+        } catch (error) {
+            console.error('Error cargando personas:', error);
+            alert('Error al cargar personas');
+        }
+    }
+
+    renderPersonas() {
+        this.personasBody.innerHTML = '';
+        this.personas.forEach(persona => {
+            const row = document.createElement('tr');
+            const generoTexto = persona.genero === 0 ? 'Masculino' : persona.genero === 1 ? 'Femenino' : 'Otro';
+            row.innerHTML = `
+                <td>${persona.id}</td>
+                <td>${persona.nombre}</td>
+                <td>${persona.telefono}</td>
+                <td>${persona.fechaNacimiento}</td>
+                <td>${generoTexto}</td>
+                <td>${persona.estado ? 'Activo' : 'Inactivo'}</td>
+                <td>
+                    <button class="btn btn-edit">Editar</button>
+                    <button class="btn btn-delete">Eliminar</button>
+                </td>
+            `;
+            const editBtn = row.querySelector('.btn-edit');
+            const deleteBtn = row.querySelector('.btn-delete');
+            editBtn.addEventListener('click', () => this.editPersona(persona.id));
+            deleteBtn.addEventListener('click', () => this.deletePersona(persona.id));
+            this.personasBody.appendChild(row);
+        });
+    }
+
+    showCreatePersonaForm() {
+        this.personaFormTitle.textContent = 'Crear Persona';
+        this.personaForm.reset();
+        document.getElementById('personaId').value = '';
+        this.personaModal.style.display = 'block';
+    }
+
+    async editPersona(id) {
+        try {
+            const persona = await EventoAPI.getPersona(id);
+            this.personaFormTitle.textContent = 'Editar Persona';
+            document.getElementById('personaId').value = persona.id;
+            document.getElementById('personaNombre').value = persona.nombre;
+            document.getElementById('personaTelefono').value = persona.telefono;
+            document.getElementById('personaFechaNacimiento').value = persona.fechaNacimiento;
+            document.getElementById('personaGenero').value = persona.genero;
+            document.getElementById('personaEstado').checked = persona.estado;
+            this.personaModal.style.display = 'block';
+        } catch (error) {
+            console.error('Error cargando persona para editar:', error);
+            alert('Error al cargar persona');
+        }
+    }
+
+    async deletePersona(id) {
+        if (confirm('¿Está seguro de que desea eliminar esta persona?')) {
+            try {
+                await EventoAPI.deletePersona(id);
+                await this.loadPersonas();
+                alert('Persona eliminada exitosamente');
+            } catch (error) {
+                console.error('Error eliminando persona:', error);
+                alert('Error al eliminar persona');
+            }
+        }
+    }
+
+    async handlePersonaSubmit(e) {
+        e.preventDefault();
+        const formData = new FormData(this.personaForm);
+        const persona = {
+            id: parseInt(formData.get('id')) || 0,
+            nombre: formData.get('nombre'),
+            telefono: formData.get('telefono'),
+            fechaNacimiento: formData.get('fechaNacimiento'),
+            genero: parseInt(formData.get('genero')),
+            estado: formData.has('estado'),
+        };
+
+        try {
+            if (persona.id) {
+                await EventoAPI.updatePersona(persona.id, persona);
+                alert('Persona actualizada exitosamente');
+            } else {
+                await EventoAPI.createPersona(persona);
+                alert('Persona creada exitosamente');
+            }
+            this.hidePersonaModal();
+            await this.loadPersonas();
+        } catch (error) {
+            console.error('Error guardando persona:', error);
+            alert(error.message);
+        }
+    }
+
+    hidePersonaModal() {
+        this.personaModal.style.display = 'none';
+    }
+
+    async loadTipoEventosList() {
+        try {
+            this.tipoEventosList = await EventoAPI.getTipoEventos();
+            this.renderTipoEventos();
+        } catch (error) {
+            console.error('Error cargando tipos de evento:', error);
+            alert('Error al cargar tipos de evento');
+        }
+    }
+
+    renderTipoEventos() {
+        this.tipoEventosBody.innerHTML = '';
+        this.tipoEventosList.forEach(tipoEvento => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${tipoEvento.id}</td>
+                <td>${tipoEvento.nombre}</td>
+                <td>${tipoEvento.estado ? 'Activo' : 'Inactivo'}</td>
+                <td>
+                    <button class="btn btn-edit">Editar</button>
+                    <button class="btn btn-delete">Eliminar</button>
+                </td>
+            `;
+            const editBtn = row.querySelector('.btn-edit');
+            const deleteBtn = row.querySelector('.btn-delete');
+            editBtn.addEventListener('click', () => this.editTipoEvento(tipoEvento.id));
+            deleteBtn.addEventListener('click', () => this.deleteTipoEvento(tipoEvento.id));
+            this.tipoEventosBody.appendChild(row);
+        });
+    }
+
+    showCreateTipoEventoForm() {
+        this.tipoEventoFormTitle.textContent = 'Crear Tipo de Evento';
+        this.tipoEventoForm.reset();
+        document.getElementById('tipoEventoId').value = '';
+        this.tipoEventoModal.style.display = 'block';
+    }
+
+    async editTipoEvento(id) {
+        try {
+            const tipoEvento = await EventoAPI.getTipoEvento(id);
+            this.tipoEventoFormTitle.textContent = 'Editar Tipo de Evento';
+            document.getElementById('tipoEventoId').value = tipoEvento.id;
+            document.getElementById('tipoEventoNombre').value = tipoEvento.nombre;
+            document.getElementById('tipoEventoEstado').checked = tipoEvento.estado;
+            this.tipoEventoModal.style.display = 'block';
+        } catch (error) {
+            console.error('Error cargando tipo de evento para editar:', error);
+            alert('Error al cargar tipo de evento');
+        }
+    }
+
+    async deleteTipoEvento(id) {
+        if (confirm('¿Está seguro de que desea eliminar este tipo de evento?')) {
+            try {
+                await EventoAPI.deleteTipoEvento(id);
+                await this.loadTipoEventosList();
+                alert('Tipo de evento eliminado exitosamente');
+            } catch (error) {
+                console.error('Error eliminando tipo de evento:', error);
+                alert('Error al eliminar tipo de evento');
+            }
+        }
+    }
+
+    async handleTipoEventoSubmit(e) {
+        e.preventDefault();
+        const formData = new FormData(this.tipoEventoForm);
+        const idValue = formData.get('id') || document.getElementById('tipoEventoId').value;
+        const tipoEvento = {
+            id: parseInt(idValue) || 0,
+            nombre: formData.get('nombre'),
+            estado: formData.has('estado'),
+        };
+
+        try {
+            if (tipoEvento.id) {
+                await EventoAPI.updateTipoEvento(tipoEvento.id, tipoEvento);
+                alert('Tipo de evento actualizado exitosamente');
+            } else {
+                await EventoAPI.createTipoEvento(tipoEvento);
+                alert('Tipo de evento creado exitosamente');
+            }
+            this.hideTipoEventoModal();
+            await this.loadTipoEventosList();
+            await this.loadTipoEventos(); // reload the select options
+        } catch (error) {
+            console.error('Error guardando tipo de evento:', error);
+            alert(error.message);
+        }
+    }
+
+    hideTipoEventoModal() {
+        this.tipoEventoModal.style.display = 'none';
     }
 
     hideModal() {

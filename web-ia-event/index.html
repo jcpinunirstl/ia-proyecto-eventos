@@ -83,6 +83,95 @@
                 </form>
             </div>
         </div>
+
+        <h1>Gestión de Personas</h1>
+        <button id="createPersonaBtn">Crear Nueva Persona</button>
+
+        <table id="personasTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Teléfono</th>
+                    <th>Fecha Nacimiento</th>
+                    <th>Género</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="personasBody">
+            </tbody>
+        </table>
+
+        <div id="personaModal" class="modal">
+            <div class="modal-content">
+                <span class="close-persona">&times;</span>
+                <h2 id="personaFormTitle">Crear Persona</h2>
+                <form id="personaForm">
+                    <input type="hidden" id="personaId" name="id">
+                    <div class="form-group">
+                        <label for="personaNombre">Nombre:</label>
+                        <input type="text" id="personaNombre" name="nombre" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="personaTelefono">Teléfono:</label>
+                        <input type="text" id="personaTelefono" name="telefono" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="personaFechaNacimiento">Fecha Nacimiento:</label>
+                        <input type="date" id="personaFechaNacimiento" name="fechaNacimiento" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="personaGenero">Género:</label>
+                        <select id="personaGenero" name="genero" required>
+                            <option value="0">Masculino</option>
+                            <option value="1">Femenino</option>
+                            <option value="2">Otro</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="personaEstado">Estado:</label>
+                        <input type="checkbox" id="personaEstado" name="estado">
+                    </div>
+                    <button type="submit">Guardar</button>
+                </form>
+            </div>
+        </div>
+
+        <h1>Gestión de Tipos de Evento</h1>
+        <button id="createTipoEventoBtn">Crear Nuevo Tipo de Evento</button>
+
+        <table id="tipoEventosTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="tipoEventosBody">
+            </tbody>
+        </table>
+
+        <div id="tipoEventoModal" class="modal">
+            <div class="modal-content">
+                <span class="close-tipo-evento">&times;</span>
+                <h2 id="tipoEventoFormTitle">Crear Tipo de Evento</h2>
+                <form id="tipoEventoForm">
+                    <input type="hidden" id="tipoEventoId" name="id">
+                    <div class="form-group">
+                        <label for="tipoEventoNombre">Nombre:</label>
+                        <input type="text" id="tipoEventoNombre" name="nombre" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="tipoEventoEstado">Estado:</label>
+                        <input type="checkbox" id="tipoEventoEstado" name="estado">
+                    </div>
+                    <button type="submit">Guardar</button>
+                </form>
+            </div>
+        </div>
     </div>
 
     <script type="module" src="app.js"></script>
