@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Eventos</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Gestión de Eventos</h1>
+        <button id="createBtn">Crear Nuevo Evento</button>
+
+        <table id="eventsTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Descripción</th>
+                    <th>Dirección</th>
+                    <th>Costo</th>
+                    <th>Fecha Inicio</th>
+                    <th>Fecha Fin</th>
+                    <th>Hora Inicio</th>
+                    <th>Hora Fin</th>
+                    <th>Tipo Evento</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="eventsBody">
+            </tbody>
+        </table>
+
+        <div id="formModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2 id="formTitle">Crear Evento</h2>
+                <form id="eventForm">
+                    <input type="hidden" id="eventId" name="id">
+                    <div class="form-group">
+                        <label for="nombre">Nombre:</label>
+                        <input type="text" id="nombre" name="nombre" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="descripcion">Descripción:</label>
+                        <textarea id="descripcion" name="descripcion" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="direccion">Dirección:</label>
+                        <input type="text" id="direccion" name="direccion" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="costo">Costo:</label>
+                        <input type="number" id="costo" name="costo" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="fechaInicio">Fecha Inicio:</label>
+                        <input type="date" id="fechaInicio" name="fechaInicio" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="fechaFin">Fecha Fin:</label>
+                        <input type="date" id="fechaFin" name="fechaFin" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="horaInicio">Hora Inicio:</label>
+                        <input type="time" id="horaInicio" name="horaInicio" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="horaFin">Hora Fin:</label>
+                        <input type="time" id="horaFin" name="horaFin" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="tipoEventoId">Tipo Evento:</label>
+                        <select id="tipoEventoId" name="tipoEventoId" required>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="estado">Estado:</label>
+                        <input type="checkbox" id="estado" name="estado">
+                    </div>
+                    <button type="submit">Guardar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="app.js"></script>
+</body>
+</html>
