@@ -164,6 +164,61 @@ class EventoAPI {
             throw new Error(`Error al eliminar tipo de evento: ${response.statusText}`);
         }
     }
+
+    static async getRegistroAsistencias() {
+        const response = await fetch(`${API_BASE_URL}/RegistroAsistencias`);
+        if (!response.ok) {
+            throw new Error('Error al obtener asistencias');
+        }
+        return await response.json();
+    }
+
+    static async getRegistroAsistencia(id) {
+        const response = await fetch(`${API_BASE_URL}/RegistroAsistencias/${id}`);
+        if (!response.ok) {
+            throw new Error('Error al obtener asistencia');
+        }
+        return await response.json();
+    }
+
+    static async createRegistroAsistencia(asistencia) {
+        const response = await fetch(`${API_BASE_URL}/RegistroAsistencias`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(asistencia),
+        });
+        if (!response.ok) {
+            const error = await response.text();
+            throw new Error(`Error al crear asistencia: ${error}`);
+        }
+        return await response.json();
+    }
+
+    static async updateRegistroAsistencia(id, asistencia) {
+        const response = await fetch(`${API_BASE_URL}/RegistroAsistencias/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(asistencia),
+        });
+        if (!response.ok) {
+            const error = await response.text();
+            throw new Error(`Error al actualizar asistencia: ${error}`);
+        }
+    }
+
+    static async deleteRegistroAsistencia(id) {
+        const response = await fetch(`${API_BASE_URL}/RegistroAsistencias/${id}`, {
+            method: 'DELETE',
+        });
+        if (!response.ok) {
+            const error = await response.text();
+            throw new Error(`Error al eliminar asistencia: ${response.statusText}`);
+        }
+    }
 }
 
 export default EventoAPI;

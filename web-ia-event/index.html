@@ -172,6 +172,53 @@
                 </form>
             </div>
         </div>
+
+        <h1>Gestión de Asistencias</h1>
+        <button id="createAsistenciaBtn">Crear Nueva Asistencia</button>
+
+        <table id="asistenciasTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Fecha Entrada</th>
+                    <th>Observación</th>
+                    <th>Evento</th>
+                    <th>Persona</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="asistenciasBody">
+            </tbody>
+        </table>
+
+        <div id="asistenciaModal" class="modal">
+            <div class="modal-content">
+                <span class="close-asistencia">&times;</span>
+                <h2 id="asistenciaFormTitle">Crear Asistencia</h2>
+                <form id="asistenciaForm">
+                    <input type="hidden" id="asistenciaId" name="id">
+                    <div class="form-group">
+                        <label for="asistenciaFechaEntrada">Fecha Entrada:</label>
+                        <input type="datetime-local" id="asistenciaFechaEntrada" name="fechaEntrada" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="asistenciaObservacion">Observación:</label>
+                        <textarea id="asistenciaObservacion" name="observacion"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="asistenciaEventoId">Evento:</label>
+                        <select id="asistenciaEventoId" name="eventoId" required>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="asistenciaPersonaId">Persona:</label>
+                        <select id="asistenciaPersonaId" name="personaId" required>
+                        </select>
+                    </div>
+                    <button type="submit">Guardar</button>
+                </form>
+            </div>
+        </div>
     </div>
 
     <script type="module" src="app.js"></script>

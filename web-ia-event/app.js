@@ -6,6 +6,7 @@ class EventoUI {
         this.tipoEventos = [];
         this.personas = [];
         this.tipoEventosList = [];
+        this.asistencias = [];
         this.modal = document.getElementById('formModal');
         this.form = document.getElementById('eventForm');
         this.formTitle = document.getElementById('formTitle');
@@ -22,6 +23,13 @@ class EventoUI {
         this.tipoEventoFormTitle = document.getElementById('tipoEventoFormTitle');
         this.tipoEventosBody = document.getElementById('tipoEventosBody');
 
+        this.asistenciaModal = document.getElementById('asistenciaModal');
+        this.asistenciaForm = document.getElementById('asistenciaForm');
+        this.asistenciaFormTitle = document.getElementById('asistenciaFormTitle');
+        this.asistenciasBody = document.getElementById('asistenciasBody');
+        this.asistenciaEventoSelect = document.getElementById('asistenciaEventoId');
+        this.asistenciaPersonaSelect = document.getElementById('asistenciaPersonaId');
+
         this.init();
     }
 
@@ -30,6 +38,7 @@ class EventoUI {
         await this.loadEventos();
         await this.loadPersonas();
         await this.loadTipoEventosList();
+        await this.loadAsistencias();
 
         document.getElementById('createBtn').addEventListener('click', () => this.showCreateForm());
         document.querySelector('.close').addEventListener('click', () => this.hideModal());
@@ -55,6 +64,15 @@ class EventoUI {
         window.addEventListener('click', (e) => {
             if (e.target === this.tipoEventoModal) {
                 this.hideTipoEventoModal();
+            }
+        });
+
+        document.getElementById('createAsistenciaBtn').addEventListener('click', () => this.showCreateAsistenciaForm());
+        document.querySelector('.close-asistencia').addEventListener('click', () => this.hideAsistenciaModal());
+        this.asistenciaForm.addEventListener('submit', (e) => this.handleAsistenciaSubmit(e));
+        window.addEventListener('click', (e) => {
+            if (e.target === this.asistenciaModal) {
+                this.hideAsistenciaModal();
             }
         });
     }
@@ -391,6 +409,127 @@ class EventoUI {
 
     hideTipoEventoModal() {
         this.tipoEventoModal.style.display = 'none';
+    }
+
+    async loadAsistencias() {
+        try {
+            this.asistencias = await EventoAPI.getRegistroAsistencias();
+            this.renderAsistencias();
+            this.populateAsistenciaSelects();
+        } catch (error) {
+            console.error('Error cargando asistencias:', error);
+            alert('Error al cargar asistencias');
+        }
+    }
+
+    populateAsistenciaSelects() {
+        // Populate evento select
+        this.asistenciaEventoSelect.innerHTML = '';
+        this.eventos.forEach(evento => {
+            const option = document.createElement('option');
+            option.value = evento.id;
+            option.textContent = evento.nombre;
+            this.asistenciaEventoSelect.appendChild(option);
+        });
+
+        // Populate persona select
+        this.asistenciaPersonaSelect.innerHTML = '';
+        this.personas.forEach(persona => {
+            const option = document.createElement('option');
+            option.value = persona.id;
+            option.textContent = persona.nombre;
+            this.asistenciaPersonaSelect.appendChild(option);
+        });
+    }
+
+    renderAsistencias() {
+        this.asistenciasBody.innerHTML = '';
+        this.asistencias.forEach(asistencia => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${asistencia.id}</td>
+                <td>${new Date(asistencia.fechaEntrada).toLocaleString()}</td>
+                <td>${asistencia.observacion}</td>
+                <td>${asistencia.evento ? asistencia.evento.nombre : ''}</td>
+                <td>${asistencia.persona ? asistencia.persona.nombre : ''}</td>
+                <td>
+                    <button class="btn btn-edit">Editar</button>
+                    <button class="btn btn-delete">Eliminar</button>
+                </td>
+            `;
+            const editBtn = row.querySelector('.btn-edit');
+            const deleteBtn = row.querySelector('.btn-delete');
+            editBtn.addEventListener('click', () => this.editAsistencia(asistencia.id));
+            deleteBtn.addEventListener('click', () => this.deleteAsistencia(asistencia.id));
+            this.asistenciasBody.appendChild(row);
+        });
+    }
+
+    showCreateAsistenciaForm() {
+        this.asistenciaFormTitle.textContent = 'Crear Asistencia';
+        this.asistenciaForm.reset();
+        document.getElementById('asistenciaId').value = '';
+        this.asistenciaModal.style.display = 'block';
+    }
+
+    async editAsistencia(id) {
+        try {
+            const asistencia = await EventoAPI.getRegistroAsistencia(id);
+            this.asistenciaFormTitle.textContent = 'Editar Asistencia';
+            document.getElementById('asistenciaId').value = asistencia.id;
+            document.getElementById('asistenciaFechaEntrada').value = new Date(asistencia.fechaEntrada).toISOString().slice(0, 16);
+            document.getElementById('asistenciaObservacion').value = asistencia.observacion;
+            document.getElementById('asistenciaEventoId').value = asistencia.eventoId;
+            document.getElementById('asistenciaPersonaId').value = asistencia.personaId;
+            this.asistenciaModal.style.display = 'block';
+        } catch (error) {
+            console.error('Error cargando asistencia para editar:', error);
+            alert('Error al cargar asistencia');
+        }
+    }
+
+    async deleteAsistencia(id) {
+        if (confirm('¿Está seguro de que desea eliminar esta asistencia?')) {
+            try {
+                await EventoAPI.deleteRegistroAsistencia(id);
+                await this.loadAsistencias();
+                alert('Asistencia eliminada exitosamente');
+            } catch (error) {
+                console.error('Error eliminando asistencia:', error);
+                alert('Error al eliminar asistencia');
+            }
+        }
+    }
+
+    async handleAsistenciaSubmit(e) {
+        e.preventDefault();
+        const formData = new FormData(this.asistenciaForm);
+        const asistencia = {
+            id: parseInt(formData.get('id')) || 0,
+            fechaEntrada: new Date(formData.get('fechaEntrada')).toISOString(),
+            observacion: formData.get('observacion'),
+            eventoId: parseInt(formData.get('eventoId')),
+            personaId: parseInt(formData.get('personaId')),
+        };
+
+        try {
+            if (asistencia.id) {
+                await EventoAPI.updateRegistroAsistencia(asistencia.id, asistencia);
+                alert('Asistencia actualizada exitosamente');
+            } else {
+                await EventoAPI.createRegistroAsistencia(asistencia);
+                alert('Asistencia creada exitosamente');
+            }
+            this.hideAsistenciaModal();
+            await this.loadAsistencias();
+        } catch (error) {
+            console.error('Error guardando asistencia:', error);
+            alert(error.message);
+        }
+    }
+
+    hideAsistenciaModal() {
+        this.asistenciaModal.style.display = 'none';
     }
 
     hideModal() {

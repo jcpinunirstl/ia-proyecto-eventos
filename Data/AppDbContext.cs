@@ -12,5 +12,6 @@ namespace IaProyectoEventos.Data
         public DbSet<TipoEvento> TipoEventos { get; set; }
         public DbSet<Persona> Personas { get; set; }
         public DbSet<RegistroAsistencia> RegistroAsistencias { get; set; }
+        public DbSet<Usuario> Usuarios { get; set; }
     }
 }
