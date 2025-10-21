@@ -32,9 +32,7 @@ class App {
         document.getElementById('registerBtn').addEventListener('click', () => this.showRegisterModal());
         document.getElementById('logoutBtn').addEventListener('click', () => this.logout());
 
-        // Modals
-        document.querySelector('.close-login').addEventListener('click', () => this.hideLoginModal());
-        document.querySelector('.close-register').addEventListener('click', () => this.hideRegisterModal());
+        // Forms
         document.getElementById('loginForm').addEventListener('submit', (e) => this.handleLogin(e));
         document.getElementById('registerForm').addEventListener('submit', (e) => this.handleRegister(e));
 
@@ -45,30 +43,16 @@ class App {
 
         // CRUD events
         document.getElementById('createBtn').addEventListener('click', () => this.showCreateForm());
-        document.querySelector('.close').addEventListener('click', () => this.hideModal());
         document.getElementById('eventForm').addEventListener('submit', (e) => this.handleSubmit(e));
 
         document.getElementById('createTipoEventoBtn').addEventListener('click', () => this.showCreateTipoEventoForm());
-        document.querySelector('.close-tipo-evento').addEventListener('click', () => this.hideTipoEventoModal());
         document.getElementById('tipoEventoForm').addEventListener('submit', (e) => this.handleTipoEventoSubmit(e));
 
         document.getElementById('createAsistenciaBtn').addEventListener('click', () => this.showCreateAsistenciaForm());
-        document.querySelector('.close-asistencia').addEventListener('click', () => this.hideAsistenciaModal());
         document.getElementById('asistenciaForm').addEventListener('submit', (e) => this.handleAsistenciaSubmit(e));
 
         document.getElementById('createPersonaBtn').addEventListener('click', () => this.showCreatePersonaForm());
-        document.querySelector('.close-persona').addEventListener('click', () => this.hidePersonaModal());
         document.getElementById('personaForm').addEventListener('submit', (e) => this.handlePersonaSubmit(e));
-
-        // Close modals on outside click
-        window.addEventListener('click', (e) => {
-            if (e.target === document.getElementById('loginModal')) this.hideLoginModal();
-            if (e.target === document.getElementById('registerModal')) this.hideRegisterModal();
-            if (e.target === document.getElementById('formModal')) this.hideModal();
-            if (e.target === document.getElementById('tipoEventoModal')) this.hideTipoEventoModal();
-            if (e.target === document.getElementById('asistenciaModal')) this.hideAsistenciaModal();
-            if (e.target === document.getElementById('personaModal')) this.hidePersonaModal();
-        });
     }
 
     showPublicView() {
@@ -96,34 +80,48 @@ class App {
         list.innerHTML = '';
         this.eventos.forEach(evento => {
             const div = document.createElement('div');
-            div.className = 'event-card';
+            div.className = 'col-md-6 col-lg-4 mb-4';
             div.innerHTML = `
-                <h3>${evento.nombre}</h3>
-                <p>${evento.descripcion}</p>
-                <p><strong>Dirección:</strong> ${evento.direccion}</p>
-                <p><strong>Costo:</strong> $${evento.costo}</p>
-                <p><strong>Fecha:</strong> ${evento.fechaInicio} - ${evento.fechaFin}</p>
-                <p><strong>Hora:</strong> ${evento.horaInicio} - ${evento.horaFin}</p>
-                <p><strong>Tipo:</strong> ${evento.tipoEvento ? evento.tipoEvento.nombre : 'N/A'}</p>
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">${evento.nombre}</h5>
+                        <p class="card-text">${evento.descripcion}</p>
+                        <ul class="list-unstyled">
+                            <li><i class="bi bi-geo-alt"></i> <strong>Dirección:</strong> ${evento.direccion}</li>
+                            <li><i class="bi bi-cash"></i> <strong>Costo:</strong> $${evento.costo}</li>
+                            <li><i class="bi bi-calendar"></i> <strong>Fecha:</strong> ${evento.fechaInicio} - ${evento.fechaFin}</li>
+                            <li><i class="bi bi-clock"></i> <strong>Hora:</strong> ${evento.horaInicio} - ${evento.horaFin}</li>
+                            <li><i class="bi bi-tag"></i> <strong>Tipo:</strong> ${evento.tipoEvento ? evento.tipoEvento.nombre : 'N/A'}</li>
+                        </ul>
+                    </div>
+                </div>
             `;
             list.appendChild(div);
         });
     }
 
     showLoginModal() {
-        document.getElementById('loginModal').style.display = 'block';
+        const modalEl = document.getElementById('loginModal');
+        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+        modal.show();
     }
 
     hideLoginModal() {
-        document.getElementById('loginModal').style.display = 'none';
+        const modalEl = document.getElementById('loginModal');
+        const modal = bootstrap.Modal.getInstance(modalEl);
+        if (modal) modal.hide();
     }
 
     showRegisterModal() {
-        document.getElementById('registerModal').style.display = 'block';
+        const modalEl = document.getElementById('registerModal');
+        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+        modal.show();
     }
 
     hideRegisterModal() {
-        document.getElementById('registerModal').style.display = 'none';
+        const modalEl = document.getElementById('registerModal');
+        const modal = bootstrap.Modal.getInstance(modalEl);
+        if (modal) modal.hide();
     }
 
     async handleLogin(e) {
@@ -154,7 +152,6 @@ class App {
             password: formData.get('password'),
             nombre: formData.get('nombre'),
             telefono: formData.get('telefono'),
-            email: formData.get('email'),
             fechaNacimiento: formData.get('fechaNacimiento'),
             genero: parseInt(formData.get('genero')) || 0,
             rol: 'usuario'
@@ -182,6 +179,7 @@ class App {
     async loadAdminData() {
         await Promise.all([
             this.loadTipoEventos(),
+            this.loadTipoEventosList(),
             this.loadEventos(),
             this.loadPersonas(),
             this.loadPersonasList(),
@@ -209,19 +207,23 @@ class App {
 
     populateTipoEventoSelect() {
         const select = document.getElementById('tipoEventoId');
-        const asistenciaSelect = document.getElementById('asistenciaEventoId');
         select.innerHTML = '';
-        asistenciaSelect.innerHTML = '';
         this.tipoEventos.forEach(tipo => {
-            const option1 = document.createElement('option');
-            option1.value = tipo.id;
-            option1.textContent = tipo.nombre;
-            select.appendChild(option1);
+            const option = document.createElement('option');
+            option.value = tipo.id;
+            option.textContent = tipo.nombre;
+            select.appendChild(option);
+        });
+    }
 
-            const option2 = document.createElement('option');
-            option2.value = tipo.id;
-            option2.textContent = tipo.nombre;
-            asistenciaSelect.appendChild(option2);
+    populateEventoSelect() {
+        const asistenciaSelect = document.getElementById('asistenciaEventoId');
+        asistenciaSelect.innerHTML = '';
+        this.eventos.forEach(evento => {
+            const option = document.createElement('option');
+            option.value = evento.id;
+            option.textContent = evento.nombre;
+            asistenciaSelect.appendChild(option);
         });
     }
 
@@ -229,6 +231,7 @@ class App {
         try {
             this.eventos = await EventoAPI.getEventos();
             this.renderEventos();
+            this.populateEventoSelect();
         } catch (error) {
             console.error('Error cargando eventos:', error);
         }
@@ -250,10 +253,10 @@ class App {
                 <td>${evento.horaInicio}</td>
                 <td>${evento.horaFin}</td>
                 <td>${evento.tipoEvento ? evento.tipoEvento.nombre : ''}</td>
-                <td>${evento.estado ? 'Activo' : 'Inactivo'}</td>
+                <td><span class="badge ${evento.estado ? 'bg-success' : 'bg-secondary'}">${evento.estado ? 'Activo' : 'Inactivo'}</span></td>
                 <td>
-                    <button class="btn btn-edit">Editar</button>
-                    <button class="btn btn-delete">Eliminar</button>
+                    <button class="btn btn-sm btn-primary btn-edit"><i class="bi bi-pencil"></i> Editar</button>
+                    <button class="btn btn-sm btn-danger btn-delete"><i class="bi bi-trash"></i> Eliminar</button>
                 </td>
             `;
             row.querySelector('.btn-edit').addEventListener('click', () => this.editEvento(evento.id));
@@ -266,7 +269,9 @@ class App {
         document.getElementById('formTitle').textContent = 'Crear Evento';
         document.getElementById('eventForm').reset();
         document.getElementById('eventId').value = '';
-        document.getElementById('formModal').style.display = 'block';
+        const modalEl = document.getElementById('formModal');
+        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+        modal.show();
     }
 
     async editEvento(id) {
@@ -284,7 +289,9 @@ class App {
             document.getElementById('horaFin').value = evento.horaFin;
             document.getElementById('tipoEventoId').value = evento.tipoEventoId;
             document.getElementById('estado').checked = evento.estado;
-            document.getElementById('formModal').style.display = 'block';
+            const modalEl = document.getElementById('formModal');
+            const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+            modal.show();
         } catch (error) {
             console.error('Error cargando evento:', error);
         }
@@ -332,7 +339,9 @@ class App {
     }
 
     hideModal() {
-        document.getElementById('formModal').style.display = 'none';
+        const modalEl = document.getElementById('formModal');
+        const modal = bootstrap.Modal.getInstance(modalEl);
+        if (modal) modal.hide();
     }
 
     // Tipo Eventos
@@ -353,10 +362,10 @@ class App {
             row.innerHTML = `
                 <td>${tipo.id}</td>
                 <td>${tipo.nombre}</td>
-                <td>${tipo.estado ? 'Activo' : 'Inactivo'}</td>
+                <td><span class="badge ${tipo.estado ? 'bg-success' : 'bg-secondary'}">${tipo.estado ? 'Activo' : 'Inactivo'}</span></td>
                 <td>
-                    <button class="btn btn-edit">Editar</button>
-                    <button class="btn btn-delete">Eliminar</button>
+                    <button class="btn btn-sm btn-primary btn-edit"><i class="bi bi-pencil"></i> Editar</button>
+                    <button class="btn btn-sm btn-danger btn-delete"><i class="bi bi-trash"></i> Eliminar</button>
                 </td>
             `;
             row.querySelector('.btn-edit').addEventListener('click', () => this.editTipoEvento(tipo.id));
@@ -368,18 +377,22 @@ class App {
     showCreateTipoEventoForm() {
         document.getElementById('tipoEventoFormTitle').textContent = 'Crear Tipo de Evento';
         document.getElementById('tipoEventoForm').reset();
-        document.getElementById('tipoEventoId').value = '';
-        document.getElementById('tipoEventoModal').style.display = 'block';
+        document.getElementById('tipoEventoFormId').value = '';
+        const modalEl = document.getElementById('tipoEventoModal');
+        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+        modal.show();
     }
 
     async editTipoEvento(id) {
         try {
             const tipo = await EventoAPI.getTipoEvento(id);
             document.getElementById('tipoEventoFormTitle').textContent = 'Editar Tipo de Evento';
-            document.getElementById('tipoEventoId').value = tipo.id;
+            document.getElementById('tipoEventoFormId').value = tipo.id;
             document.getElementById('tipoEventoNombre').value = tipo.nombre;
             document.getElementById('tipoEventoEstado').checked = tipo.estado;
-            document.getElementById('tipoEventoModal').style.display = 'block';
+            const modalEl = document.getElementById('tipoEventoModal');
+            const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+            modal.show();
         } catch (error) {
             console.error('Error cargando tipo de evento:', error);
         }
@@ -419,7 +432,9 @@ class App {
     }
 
     hideTipoEventoModal() {
-        document.getElementById('tipoEventoModal').style.display = 'none';
+        const modalEl = document.getElementById('tipoEventoModal');
+        const modal = bootstrap.Modal.getInstance(modalEl);
+        if (modal) modal.hide();
     }
 
     // Personas
@@ -442,13 +457,12 @@ class App {
                 <td>${persona.id}</td>
                 <td>${persona.nombre}</td>
                 <td>${persona.telefono || ''}</td>
-                <td>${persona.email || ''}</td>
                 <td>${persona.fechaNacimiento ? new Date(persona.fechaNacimiento).toLocaleDateString() : ''}</td>
                 <td>${generoTexto}</td>
-                <td>${persona.estado ? 'Activo' : 'Inactivo'}</td>
+                <td><span class="badge ${persona.estado ? 'bg-success' : 'bg-secondary'}">${persona.estado ? 'Activo' : 'Inactivo'}</span></td>
                 <td>
-                    <button class="btn btn-edit">Editar</button>
-                    <button class="btn btn-delete">Eliminar</button>
+                    <button class="btn btn-sm btn-primary btn-edit"><i class="bi bi-pencil"></i> Editar</button>
+                    <button class="btn btn-sm btn-danger btn-delete"><i class="bi bi-trash"></i> Eliminar</button>
                 </td>
             `;
             row.querySelector('.btn-edit').addEventListener('click', () => this.editPersona(persona.id));
@@ -461,7 +475,9 @@ class App {
         document.getElementById('personaFormTitle').textContent = 'Crear Persona';
         document.getElementById('personaForm').reset();
         document.getElementById('personaId').value = '';
-        document.getElementById('personaModal').style.display = 'block';
+        const modalEl = document.getElementById('personaModal');
+        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+        modal.show();
     }
 
     async editPersona(id) {
@@ -471,11 +487,12 @@ class App {
             document.getElementById('personaId').value = persona.id;
             document.getElementById('personaNombre').value = persona.nombre;
             document.getElementById('personaTelefono').value = persona.telefono || '';
-            document.getElementById('personaEmail').value = persona.email || '';
             document.getElementById('personaFechaNacimiento').value = persona.fechaNacimiento ? persona.fechaNacimiento.split('T')[0] : '';
             document.getElementById('personaGenero').value = persona.genero;
             document.getElementById('personaEstado').checked = persona.estado;
-            document.getElementById('personaModal').style.display = 'block';
+            const modalEl = document.getElementById('personaModal');
+            const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+            modal.show();
         } catch (error) {
             console.error('Error cargando persona:', error);
         }
@@ -499,7 +516,6 @@ class App {
             id: parseInt(formData.get('id')) || 0,
             nombre: formData.get('nombre'),
             telefono: formData.get('telefono'),
-            email: formData.get('email'),
             fechaNacimiento: formData.get('fechaNacimiento'),
             genero: parseInt(formData.get('genero')) || 0,
             estado: formData.has('estado'),
@@ -519,7 +535,9 @@ class App {
     }
 
     hidePersonaModal() {
-        document.getElementById('personaModal').style.display = 'none';
+        const modalEl = document.getElementById('personaModal');
+        const modal = bootstrap.Modal.getInstance(modalEl);
+        if (modal) modal.hide();
     }
 
     // Asistencias
@@ -564,8 +582,8 @@ class App {
                 <td>${asistencia.evento ? asistencia.evento.nombre : ''}</td>
                 <td>${asistencia.persona ? asistencia.persona.nombre : ''}</td>
                 <td>
-                    <button class="btn btn-edit">Editar</button>
-                    <button class="btn btn-delete">Eliminar</button>
+                    <button class="btn btn-sm btn-primary btn-edit"><i class="bi bi-pencil"></i> Editar</button>
+                    <button class="btn btn-sm btn-danger btn-delete"><i class="bi bi-trash"></i> Eliminar</button>
                 </td>
             `;
             row.querySelector('.btn-edit').addEventListener('click', () => this.editAsistencia(asistencia.id));
@@ -578,7 +596,9 @@ class App {
         document.getElementById('asistenciaFormTitle').textContent = 'Crear Asistencia';
         document.getElementById('asistenciaForm').reset();
         document.getElementById('asistenciaId').value = '';
-        document.getElementById('asistenciaModal').style.display = 'block';
+        const modalEl = document.getElementById('asistenciaModal');
+        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+        modal.show();
     }
 
     async editAsistencia(id) {
@@ -590,7 +610,9 @@ class App {
             document.getElementById('asistenciaObservacion').value = asistencia.observacion || '';
             document.getElementById('asistenciaEventoId').value = asistencia.eventoId;
             document.getElementById('asistenciaPersonaId').value = asistencia.personaId;
-            document.getElementById('asistenciaModal').style.display = 'block';
+            const modalEl = document.getElementById('asistenciaModal');
+            const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+            modal.show();
         } catch (error) {
             console.error('Error cargando asistencia:', error);
         }
@@ -632,7 +654,9 @@ class App {
     }
 
     hideAsistenciaModal() {
-        document.getElementById('asistenciaModal').style.display = 'none';
+        const modalEl = document.getElementById('asistenciaModal');
+        const modal = bootstrap.Modal.getInstance(modalEl);
+        if (modal) modal.hide();
     }
 }
 

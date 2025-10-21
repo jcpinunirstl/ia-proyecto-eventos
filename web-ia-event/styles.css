@@ -1,74 +1,24 @@
+/* Estilos personalizados complementarios a Bootstrap */
+
 body {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 20px;
-    background-color: #f4f4f4;
+    background-color: #f8f9fa;
 }
 
-.container {
-    max-width: 1200px;
-    margin: 0 auto;
-    background-color: white;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
-}
-
-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-}
-
-.auth-buttons {
-    display: flex;
-    gap: 10px;
-}
-
-.auth-buttons button {
-    background-color: #2196F3;
-    color: white;
-    padding: 8px 16px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-}
-
-.auth-buttons button:hover {
-    background-color: #0b7dda;
-}
-
-.event-card {
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    padding: 15px;
-    margin-bottom: 15px;
-    background-color: #fafafa;
-}
-
-.event-card h3 {
-    margin-top: 0;
-    color: #333;
-}
-
-.admin-nav {
-    display: flex;
-    margin-bottom: 20px;
-    border-bottom: 1px solid #ddd;
-}
-
+/* Estilos para tabs personalizados */
 .tab-btn {
     background: none;
     border: none;
-    padding: 10px 20px;
-    cursor: pointer;
-    border-bottom: 2px solid transparent;
+    color: rgba(255,255,255,0.7);
+    text-decoration: none;
+}
+
+.tab-btn:hover {
+    color: rgba(255,255,255,0.9);
 }
 
 .tab-btn.active {
-    border-bottom-color: #4CAF50;
-    font-weight: bold;
+    color: white;
+    border-bottom: 2px solid white;
 }
 
 .tab-content {
@@ -79,219 +29,16 @@ header {
     display: block;
 }
 
-h1, h2 {
-    color: #333;
+/* Espaciado adicional */
+.event-card {
+    transition: transform 0.2s;
 }
 
-#createBtn {
-    background-color: #4CAF50;
-    color: white;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    margin-bottom: 20px;
+.event-card:hover {
+    transform: translateY(-5px);
 }
 
-#createBtn:hover {
-    background-color: #45a049;
-}
-
-#createPersonaBtn {
-    background-color: #4CAF50;
-    color: white;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    margin-bottom: 20px;
-}
-
-#createPersonaBtn:hover {
-    background-color: #45a049;
-}
-
-#createTipoEventoBtn {
-    background-color: #4CAF50;
-    color: white;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    margin-bottom: 20px;
-}
-
-#createTipoEventoBtn:hover {
-    background-color: #45a049;
-}
-
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
-}
-
-th, td {
-    border: 1px solid #ddd;
-    padding: 8px;
-    text-align: left;
-}
-
-th {
-    background-color: #f2f2f2;
-    font-weight: bold;
-}
-
-tr:nth-child(even) {
-    background-color: #f9f9f9;
-}
-
-tr:hover {
-    background-color: #f5f5f5;
-}
-
-.btn {
-    padding: 5px 10px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    margin-right: 5px;
-}
-
-.btn-edit {
-    background-color: #2196F3;
-    color: white;
-}
-
-.btn-edit:hover {
-    background-color: #0b7dda;
-}
-
-.btn-delete {
-    background-color: #f44336;
-    color: white;
-}
-
-.btn-delete:hover {
-    background-color: #da190b;
-}
-
-.modal {
-    display: none;
-    position: fixed;
-    z-index: 1;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    overflow: auto;
-    background-color: rgba(0,0,0,0.4);
-}
-
-.modal-content {
-    background-color: #fefefe;
-    margin: 5% auto;
-    padding: 20px;
-    border: 1px solid #888;
-    width: 80%;
-    max-width: 600px;
-    border-radius: 8px;
-}
-
-.close {
-    color: #aaa;
-    float: right;
-    font-size: 28px;
-    font-weight: bold;
-    cursor: pointer;
-}
-
-.close:hover,
-.close:focus,
-.close-persona:hover,
-.close-persona:focus,
-.close-tipo-evento:hover,
-.close-tipo-evento:focus {
-    color: black;
-    text-decoration: none;
-}
-
-.close-persona {
-    color: #aaa;
-    float: right;
-    font-size: 28px;
-    font-weight: bold;
-    cursor: pointer;
-}
-
-.close-tipo-evento {
-    color: #aaa;
-    float: right;
-    font-size: 28px;
-    font-weight: bold;
-    cursor: pointer;
-}
-
-.form-group {
-    margin-bottom: 15px;
-}
-
-label {
-    display: block;
-    margin-bottom: 5px;
-    font-weight: bold;
-}
-
-input[type="text"],
-input[type="number"],
-input[type="date"],
-input[type="time"],
-textarea,
-select {
-    width: 100%;
-    padding: 8px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    box-sizing: border-box;
-}
-
-textarea {
-    height: 80px;
-    resize: vertical;
-}
-
-button[type="submit"] {
-    background-color: #4CAF50;
-    color: white;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    width: 100%;
-}
-
-button[type="submit"]:hover {
-    background-color: #45a049;
-}
-
-.close-login,
-.close-register,
-.close-asistencia {
-    color: #aaa;
-    float: right;
-    font-size: 28px;
-    font-weight: bold;
-    cursor: pointer;
-}
-
-.close-tipo-evento:hover,
-.close-tipo-evento:focus,
-.close-login:hover,
-.close-login:focus,
-.close-register:hover,
-.close-register:focus,
-.close-asistencia:hover,
-.close-asistencia:focus {
-    color: black;
-    text-decoration: none;
+/* Animaciones suaves para las tablas */
+tbody tr {
+    transition: background-color 0.2s;
 }
