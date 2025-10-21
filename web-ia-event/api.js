@@ -1,6 +1,10 @@
 const API_BASE_URL = 'http://localhost:5142/api';
 
 class EventoAPI {
+    static getAuthHeaders() {
+        const token = localStorage.getItem('jwtToken');
+        return token ? { 'Authorization': `Bearer ${token}` } : {};
+    }
     static async getEventos() {
         const response = await fetch(`${API_BASE_URL}/Eventos`);
         if (!response.ok) {
@@ -22,6 +26,7 @@ class EventoAPI {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                ...this.getAuthHeaders(),
             },
             body: JSON.stringify(evento),
         });
@@ -37,6 +42,7 @@ class EventoAPI {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
+                ...this.getAuthHeaders(),
             },
             body: JSON.stringify(evento),
         });
@@ -49,6 +55,7 @@ class EventoAPI {
     static async deleteEvento(id) {
         const response = await fetch(`${API_BASE_URL}/Eventos/${id}`, {
             method: 'DELETE',
+            headers: this.getAuthHeaders(),
         });
         if (!response.ok) {
             throw new Error('Error al eliminar evento');
@@ -84,6 +91,7 @@ class EventoAPI {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                ...this.getAuthHeaders(),
             },
             body: JSON.stringify(persona),
         });
@@ -99,6 +107,7 @@ class EventoAPI {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
+                ...this.getAuthHeaders(),
             },
             body: JSON.stringify(persona),
         });
@@ -111,6 +120,7 @@ class EventoAPI {
     static async deletePersona(id) {
         const response = await fetch(`${API_BASE_URL}/Personas/${id}`, {
             method: 'DELETE',
+            headers: this.getAuthHeaders(),
         });
         if (!response.ok) {
             const error = await response.text();
@@ -131,6 +141,7 @@ class EventoAPI {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                ...this.getAuthHeaders(),
             },
             body: JSON.stringify(tipoEvento),
         });
@@ -146,6 +157,7 @@ class EventoAPI {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
+                ...this.getAuthHeaders(),
             },
             body: JSON.stringify(tipoEvento),
         });
@@ -158,6 +170,7 @@ class EventoAPI {
     static async deleteTipoEvento(id) {
         const response = await fetch(`${API_BASE_URL}/TipoEventos/${id}`, {
             method: 'DELETE',
+            headers: this.getAuthHeaders(),
         });
         if (!response.ok) {
             const error = await response.text();
@@ -186,6 +199,7 @@ class EventoAPI {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                ...this.getAuthHeaders(),
             },
             body: JSON.stringify(asistencia),
         });
@@ -201,6 +215,7 @@ class EventoAPI {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
+                ...this.getAuthHeaders(),
             },
             body: JSON.stringify(asistencia),
         });
@@ -213,11 +228,41 @@ class EventoAPI {
     static async deleteRegistroAsistencia(id) {
         const response = await fetch(`${API_BASE_URL}/RegistroAsistencias/${id}`, {
             method: 'DELETE',
+            headers: this.getAuthHeaders(),
         });
         if (!response.ok) {
             const error = await response.text();
             throw new Error(`Error al eliminar asistencia: ${response.statusText}`);
         }
+    }
+
+    static async login(credentials) {
+        const response = await fetch(`${API_BASE_URL}/Usuarios/login`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(credentials),
+        });
+        if (!response.ok) {
+            throw new Error('Credenciales inválidas');
+        }
+        return await response.json();
+    }
+
+    static async register(userData) {
+        const response = await fetch(`${API_BASE_URL}/Usuarios/register`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(userData),
+        });
+        if (!response.ok) {
+            const error = await response.text();
+            throw new Error(`Error al registrar: ${error}`);
+        }
+        return await response.json();
     }
 }
 

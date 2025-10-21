@@ -1,99 +1,227 @@
 import EventoAPI from './api.js';
 
-class EventoUI {
+class App {
     constructor() {
+        this.currentUser = null;
         this.eventos = [];
         this.tipoEventos = [];
         this.personas = [];
-        this.tipoEventosList = [];
         this.asistencias = [];
-        this.modal = document.getElementById('formModal');
-        this.form = document.getElementById('eventForm');
-        this.formTitle = document.getElementById('formTitle');
-        this.eventsBody = document.getElementById('eventsBody');
-        this.tipoEventoSelect = document.getElementById('tipoEventoId');
-
-        this.personaModal = document.getElementById('personaModal');
-        this.personaForm = document.getElementById('personaForm');
-        this.personaFormTitle = document.getElementById('personaFormTitle');
-        this.personasBody = document.getElementById('personasBody');
-
-        this.tipoEventoModal = document.getElementById('tipoEventoModal');
-        this.tipoEventoForm = document.getElementById('tipoEventoForm');
-        this.tipoEventoFormTitle = document.getElementById('tipoEventoFormTitle');
-        this.tipoEventosBody = document.getElementById('tipoEventosBody');
-
-        this.asistenciaModal = document.getElementById('asistenciaModal');
-        this.asistenciaForm = document.getElementById('asistenciaForm');
-        this.asistenciaFormTitle = document.getElementById('asistenciaFormTitle');
-        this.asistenciasBody = document.getElementById('asistenciasBody');
-        this.asistenciaEventoSelect = document.getElementById('asistenciaEventoId');
-        this.asistenciaPersonaSelect = document.getElementById('asistenciaPersonaId');
-
         this.init();
     }
 
     async init() {
-        await this.loadTipoEventos();
-        await this.loadEventos();
-        await this.loadPersonas();
-        await this.loadTipoEventosList();
-        await this.loadAsistencias();
+        this.checkAuth();
+        this.setupEventListeners();
+        await this.loadPublicEvents();
+    }
 
+    checkAuth() {
+        const token = localStorage.getItem('jwtToken');
+        if (token) {
+            this.currentUser = JSON.parse(localStorage.getItem('userData') || '{}');
+            this.showAdminView();
+        } else {
+            this.showPublicView();
+        }
+    }
+
+    setupEventListeners() {
+        // Auth buttons
+        document.getElementById('loginBtn').addEventListener('click', () => this.showLoginModal());
+        document.getElementById('registerBtn').addEventListener('click', () => this.showRegisterModal());
+        document.getElementById('logoutBtn').addEventListener('click', () => this.logout());
+
+        // Modals
+        document.querySelector('.close-login').addEventListener('click', () => this.hideLoginModal());
+        document.querySelector('.close-register').addEventListener('click', () => this.hideRegisterModal());
+        document.getElementById('loginForm').addEventListener('submit', (e) => this.handleLogin(e));
+        document.getElementById('registerForm').addEventListener('submit', (e) => this.handleRegister(e));
+
+        // Tabs
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => this.switchTab(e.target.dataset.tab));
+        });
+
+        // CRUD events
         document.getElementById('createBtn').addEventListener('click', () => this.showCreateForm());
         document.querySelector('.close').addEventListener('click', () => this.hideModal());
-        this.form.addEventListener('submit', (e) => this.handleSubmit(e));
-        window.addEventListener('click', (e) => {
-            if (e.target === this.modal) {
-                this.hideModal();
-            }
-        });
-
-        document.getElementById('createPersonaBtn').addEventListener('click', () => this.showCreatePersonaForm());
-        document.querySelector('.close-persona').addEventListener('click', () => this.hidePersonaModal());
-        this.personaForm.addEventListener('submit', (e) => this.handlePersonaSubmit(e));
-        window.addEventListener('click', (e) => {
-            if (e.target === this.personaModal) {
-                this.hidePersonaModal();
-            }
-        });
+        document.getElementById('eventForm').addEventListener('submit', (e) => this.handleSubmit(e));
 
         document.getElementById('createTipoEventoBtn').addEventListener('click', () => this.showCreateTipoEventoForm());
         document.querySelector('.close-tipo-evento').addEventListener('click', () => this.hideTipoEventoModal());
-        this.tipoEventoForm.addEventListener('submit', (e) => this.handleTipoEventoSubmit(e));
-        window.addEventListener('click', (e) => {
-            if (e.target === this.tipoEventoModal) {
-                this.hideTipoEventoModal();
-            }
-        });
+        document.getElementById('tipoEventoForm').addEventListener('submit', (e) => this.handleTipoEventoSubmit(e));
 
         document.getElementById('createAsistenciaBtn').addEventListener('click', () => this.showCreateAsistenciaForm());
         document.querySelector('.close-asistencia').addEventListener('click', () => this.hideAsistenciaModal());
-        this.asistenciaForm.addEventListener('submit', (e) => this.handleAsistenciaSubmit(e));
+        document.getElementById('asistenciaForm').addEventListener('submit', (e) => this.handleAsistenciaSubmit(e));
+
+        document.getElementById('createPersonaBtn').addEventListener('click', () => this.showCreatePersonaForm());
+        document.querySelector('.close-persona').addEventListener('click', () => this.hidePersonaModal());
+        document.getElementById('personaForm').addEventListener('submit', (e) => this.handlePersonaSubmit(e));
+
+        // Close modals on outside click
         window.addEventListener('click', (e) => {
-            if (e.target === this.asistenciaModal) {
-                this.hideAsistenciaModal();
-            }
+            if (e.target === document.getElementById('loginModal')) this.hideLoginModal();
+            if (e.target === document.getElementById('registerModal')) this.hideRegisterModal();
+            if (e.target === document.getElementById('formModal')) this.hideModal();
+            if (e.target === document.getElementById('tipoEventoModal')) this.hideTipoEventoModal();
+            if (e.target === document.getElementById('asistenciaModal')) this.hideAsistenciaModal();
+            if (e.target === document.getElementById('personaModal')) this.hidePersonaModal();
         });
     }
 
+    showPublicView() {
+        document.getElementById('publicView').style.display = 'block';
+        document.getElementById('adminView').style.display = 'none';
+    }
+
+    showAdminView() {
+        document.getElementById('publicView').style.display = 'none';
+        document.getElementById('adminView').style.display = 'block';
+        this.loadAdminData();
+    }
+
+    async loadPublicEvents() {
+        try {
+            this.eventos = await EventoAPI.getEventos();
+            this.renderPublicEvents();
+        } catch (error) {
+            console.error('Error cargando eventos públicos:', error);
+        }
+    }
+
+    renderPublicEvents() {
+        const list = document.getElementById('publicEventsList');
+        list.innerHTML = '';
+        this.eventos.forEach(evento => {
+            const div = document.createElement('div');
+            div.className = 'event-card';
+            div.innerHTML = `
+                <h3>${evento.nombre}</h3>
+                <p>${evento.descripcion}</p>
+                <p><strong>Dirección:</strong> ${evento.direccion}</p>
+                <p><strong>Costo:</strong> $${evento.costo}</p>
+                <p><strong>Fecha:</strong> ${evento.fechaInicio} - ${evento.fechaFin}</p>
+                <p><strong>Hora:</strong> ${evento.horaInicio} - ${evento.horaFin}</p>
+                <p><strong>Tipo:</strong> ${evento.tipoEvento ? evento.tipoEvento.nombre : 'N/A'}</p>
+            `;
+            list.appendChild(div);
+        });
+    }
+
+    showLoginModal() {
+        document.getElementById('loginModal').style.display = 'block';
+    }
+
+    hideLoginModal() {
+        document.getElementById('loginModal').style.display = 'none';
+    }
+
+    showRegisterModal() {
+        document.getElementById('registerModal').style.display = 'block';
+    }
+
+    hideRegisterModal() {
+        document.getElementById('registerModal').style.display = 'none';
+    }
+
+    async handleLogin(e) {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const credentials = {
+            username: formData.get('username'),
+            password: formData.get('password')
+        };
+
+        try {
+            const response = await EventoAPI.login(credentials);
+            localStorage.setItem('jwtToken', response.token);
+            localStorage.setItem('userData', JSON.stringify(response));
+            this.currentUser = response;
+            this.hideLoginModal();
+            this.showAdminView();
+        } catch (error) {
+            alert(error.message);
+        }
+    }
+
+    async handleRegister(e) {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const userData = {
+            username: formData.get('username'),
+            password: formData.get('password'),
+            nombre: formData.get('nombre'),
+            telefono: formData.get('telefono'),
+            email: formData.get('email'),
+            fechaNacimiento: formData.get('fechaNacimiento'),
+            genero: parseInt(formData.get('genero')) || 0,
+            rol: 'usuario'
+        };
+
+        try {
+            const response = await EventoAPI.register(userData);
+            localStorage.setItem('jwtToken', response.token);
+            localStorage.setItem('userData', JSON.stringify(response));
+            this.currentUser = response;
+            this.hideRegisterModal();
+            this.showAdminView();
+        } catch (error) {
+            alert(error.message);
+        }
+    }
+
+    logout() {
+        localStorage.removeItem('jwtToken');
+        localStorage.removeItem('userData');
+        this.currentUser = null;
+        this.showPublicView();
+    }
+
+    async loadAdminData() {
+        await Promise.all([
+            this.loadTipoEventos(),
+            this.loadEventos(),
+            this.loadPersonas(),
+            this.loadPersonasList(),
+            this.loadAsistencias()
+        ]);
+    }
+
+    switchTab(tab) {
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+        document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
+        document.getElementById(`${tab}Tab`).classList.add('active');
+    }
+
+    // Eventos
     async loadTipoEventos() {
         try {
             this.tipoEventos = await EventoAPI.getTipoEventos();
             this.populateTipoEventoSelect();
         } catch (error) {
             console.error('Error cargando tipos de evento:', error);
-            alert('Error al cargar tipos de evento');
         }
     }
 
     populateTipoEventoSelect() {
-        this.tipoEventoSelect.innerHTML = '';
+        const select = document.getElementById('tipoEventoId');
+        const asistenciaSelect = document.getElementById('asistenciaEventoId');
+        select.innerHTML = '';
+        asistenciaSelect.innerHTML = '';
         this.tipoEventos.forEach(tipo => {
-            const option = document.createElement('option');
-            option.value = tipo.id;
-            option.textContent = tipo.nombre;
-            this.tipoEventoSelect.appendChild(option);
+            const option1 = document.createElement('option');
+            option1.value = tipo.id;
+            option1.textContent = tipo.nombre;
+            select.appendChild(option1);
+
+            const option2 = document.createElement('option');
+            option2.value = tipo.id;
+            option2.textContent = tipo.nombre;
+            asistenciaSelect.appendChild(option2);
         });
     }
 
@@ -103,12 +231,12 @@ class EventoUI {
             this.renderEventos();
         } catch (error) {
             console.error('Error cargando eventos:', error);
-            alert('Error al cargar eventos');
         }
     }
 
     renderEventos() {
-        this.eventsBody.innerHTML = '';
+        const body = document.getElementById('eventsBody');
+        body.innerHTML = '';
         this.eventos.forEach(evento => {
             const row = document.createElement('tr');
             row.innerHTML = `
@@ -128,25 +256,23 @@ class EventoUI {
                     <button class="btn btn-delete">Eliminar</button>
                 </td>
             `;
-            const editBtn = row.querySelector('.btn-edit');
-            const deleteBtn = row.querySelector('.btn-delete');
-            editBtn.addEventListener('click', () => this.editEvento(evento.id));
-            deleteBtn.addEventListener('click', () => this.deleteEvento(evento.id));
-            this.eventsBody.appendChild(row);
+            row.querySelector('.btn-edit').addEventListener('click', () => this.editEvento(evento.id));
+            row.querySelector('.btn-delete').addEventListener('click', () => this.deleteEvento(evento.id));
+            body.appendChild(row);
         });
     }
 
     showCreateForm() {
-        this.formTitle.textContent = 'Crear Evento';
-        this.form.reset();
+        document.getElementById('formTitle').textContent = 'Crear Evento';
+        document.getElementById('eventForm').reset();
         document.getElementById('eventId').value = '';
-        this.modal.style.display = 'block';
+        document.getElementById('formModal').style.display = 'block';
     }
 
     async editEvento(id) {
         try {
             const evento = await EventoAPI.getEvento(id);
-            this.formTitle.textContent = 'Editar Evento';
+            document.getElementById('formTitle').textContent = 'Editar Evento';
             document.getElementById('eventId').value = evento.id;
             document.getElementById('nombre').value = evento.nombre;
             document.getElementById('descripcion').value = evento.descripcion;
@@ -158,29 +284,26 @@ class EventoUI {
             document.getElementById('horaFin').value = evento.horaFin;
             document.getElementById('tipoEventoId').value = evento.tipoEventoId;
             document.getElementById('estado').checked = evento.estado;
-            this.modal.style.display = 'block';
+            document.getElementById('formModal').style.display = 'block';
         } catch (error) {
-            console.error('Error cargando evento para editar:', error);
-            alert('Error al cargar evento');
+            console.error('Error cargando evento:', error);
         }
     }
 
     async deleteEvento(id) {
-        if (confirm('¿Está seguro de que desea eliminar este evento?')) {
+        if (confirm('¿Eliminar evento?')) {
             try {
                 await EventoAPI.deleteEvento(id);
                 await this.loadEventos();
-                alert('Evento eliminado exitosamente');
             } catch (error) {
-                console.error('Error eliminando evento:', error);
-                alert('Error al eliminar evento');
+                alert('Error eliminando evento');
             }
         }
     }
 
     async handleSubmit(e) {
         e.preventDefault();
-        const formData = new FormData(this.form);
+        const formData = new FormData(e.target);
         const evento = {
             id: parseInt(formData.get('id')) || 0,
             nombre: formData.get('nombre'),
@@ -198,194 +321,86 @@ class EventoUI {
         try {
             if (evento.id) {
                 await EventoAPI.updateEvento(evento.id, evento);
-                alert('Evento actualizado exitosamente');
             } else {
                 await EventoAPI.createEvento(evento);
-                alert('Evento creado exitosamente');
             }
             this.hideModal();
             await this.loadEventos();
         } catch (error) {
-            console.error('Error guardando evento:', error);
             alert(error.message);
         }
     }
 
-    async loadPersonas() {
-        try {
-            this.personas = await EventoAPI.getPersonas();
-            this.renderPersonas();
-        } catch (error) {
-            console.error('Error cargando personas:', error);
-            alert('Error al cargar personas');
-        }
+    hideModal() {
+        document.getElementById('formModal').style.display = 'none';
     }
 
-    renderPersonas() {
-        this.personasBody.innerHTML = '';
-        this.personas.forEach(persona => {
-            const row = document.createElement('tr');
-            const generoTexto = persona.genero === 0 ? 'Masculino' : persona.genero === 1 ? 'Femenino' : 'Otro';
-            row.innerHTML = `
-                <td>${persona.id}</td>
-                <td>${persona.nombre}</td>
-                <td>${persona.telefono}</td>
-                <td>${persona.fechaNacimiento}</td>
-                <td>${generoTexto}</td>
-                <td>${persona.estado ? 'Activo' : 'Inactivo'}</td>
-                <td>
-                    <button class="btn btn-edit">Editar</button>
-                    <button class="btn btn-delete">Eliminar</button>
-                </td>
-            `;
-            const editBtn = row.querySelector('.btn-edit');
-            const deleteBtn = row.querySelector('.btn-delete');
-            editBtn.addEventListener('click', () => this.editPersona(persona.id));
-            deleteBtn.addEventListener('click', () => this.deletePersona(persona.id));
-            this.personasBody.appendChild(row);
-        });
-    }
-
-    showCreatePersonaForm() {
-        this.personaFormTitle.textContent = 'Crear Persona';
-        this.personaForm.reset();
-        document.getElementById('personaId').value = '';
-        this.personaModal.style.display = 'block';
-    }
-
-    async editPersona(id) {
-        try {
-            const persona = await EventoAPI.getPersona(id);
-            this.personaFormTitle.textContent = 'Editar Persona';
-            document.getElementById('personaId').value = persona.id;
-            document.getElementById('personaNombre').value = persona.nombre;
-            document.getElementById('personaTelefono').value = persona.telefono;
-            document.getElementById('personaFechaNacimiento').value = persona.fechaNacimiento;
-            document.getElementById('personaGenero').value = persona.genero;
-            document.getElementById('personaEstado').checked = persona.estado;
-            this.personaModal.style.display = 'block';
-        } catch (error) {
-            console.error('Error cargando persona para editar:', error);
-            alert('Error al cargar persona');
-        }
-    }
-
-    async deletePersona(id) {
-        if (confirm('¿Está seguro de que desea eliminar esta persona?')) {
-            try {
-                await EventoAPI.deletePersona(id);
-                await this.loadPersonas();
-                alert('Persona eliminada exitosamente');
-            } catch (error) {
-                console.error('Error eliminando persona:', error);
-                alert('Error al eliminar persona');
-            }
-        }
-    }
-
-    async handlePersonaSubmit(e) {
-        e.preventDefault();
-        const formData = new FormData(this.personaForm);
-        const persona = {
-            id: parseInt(formData.get('id')) || 0,
-            nombre: formData.get('nombre'),
-            telefono: formData.get('telefono'),
-            fechaNacimiento: formData.get('fechaNacimiento'),
-            genero: parseInt(formData.get('genero')),
-            estado: formData.has('estado'),
-        };
-
-        try {
-            if (persona.id) {
-                await EventoAPI.updatePersona(persona.id, persona);
-                alert('Persona actualizada exitosamente');
-            } else {
-                await EventoAPI.createPersona(persona);
-                alert('Persona creada exitosamente');
-            }
-            this.hidePersonaModal();
-            await this.loadPersonas();
-        } catch (error) {
-            console.error('Error guardando persona:', error);
-            alert(error.message);
-        }
-    }
-
-    hidePersonaModal() {
-        this.personaModal.style.display = 'none';
-    }
-
+    // Tipo Eventos
     async loadTipoEventosList() {
         try {
-            this.tipoEventosList = await EventoAPI.getTipoEventos();
+            this.tipoEventos = await EventoAPI.getTipoEventos();
             this.renderTipoEventos();
         } catch (error) {
             console.error('Error cargando tipos de evento:', error);
-            alert('Error al cargar tipos de evento');
         }
     }
 
     renderTipoEventos() {
-        this.tipoEventosBody.innerHTML = '';
-        this.tipoEventosList.forEach(tipoEvento => {
+        const body = document.getElementById('tipoEventosBody');
+        body.innerHTML = '';
+        this.tipoEventos.forEach(tipo => {
             const row = document.createElement('tr');
             row.innerHTML = `
-                <td>${tipoEvento.id}</td>
-                <td>${tipoEvento.nombre}</td>
-                <td>${tipoEvento.estado ? 'Activo' : 'Inactivo'}</td>
+                <td>${tipo.id}</td>
+                <td>${tipo.nombre}</td>
+                <td>${tipo.estado ? 'Activo' : 'Inactivo'}</td>
                 <td>
                     <button class="btn btn-edit">Editar</button>
                     <button class="btn btn-delete">Eliminar</button>
                 </td>
             `;
-            const editBtn = row.querySelector('.btn-edit');
-            const deleteBtn = row.querySelector('.btn-delete');
-            editBtn.addEventListener('click', () => this.editTipoEvento(tipoEvento.id));
-            deleteBtn.addEventListener('click', () => this.deleteTipoEvento(tipoEvento.id));
-            this.tipoEventosBody.appendChild(row);
+            row.querySelector('.btn-edit').addEventListener('click', () => this.editTipoEvento(tipo.id));
+            row.querySelector('.btn-delete').addEventListener('click', () => this.deleteTipoEvento(tipo.id));
+            body.appendChild(row);
         });
     }
 
     showCreateTipoEventoForm() {
-        this.tipoEventoFormTitle.textContent = 'Crear Tipo de Evento';
-        this.tipoEventoForm.reset();
+        document.getElementById('tipoEventoFormTitle').textContent = 'Crear Tipo de Evento';
+        document.getElementById('tipoEventoForm').reset();
         document.getElementById('tipoEventoId').value = '';
-        this.tipoEventoModal.style.display = 'block';
+        document.getElementById('tipoEventoModal').style.display = 'block';
     }
 
     async editTipoEvento(id) {
         try {
-            const tipoEvento = await EventoAPI.getTipoEvento(id);
-            this.tipoEventoFormTitle.textContent = 'Editar Tipo de Evento';
-            document.getElementById('tipoEventoId').value = tipoEvento.id;
-            document.getElementById('tipoEventoNombre').value = tipoEvento.nombre;
-            document.getElementById('tipoEventoEstado').checked = tipoEvento.estado;
-            this.tipoEventoModal.style.display = 'block';
+            const tipo = await EventoAPI.getTipoEvento(id);
+            document.getElementById('tipoEventoFormTitle').textContent = 'Editar Tipo de Evento';
+            document.getElementById('tipoEventoId').value = tipo.id;
+            document.getElementById('tipoEventoNombre').value = tipo.nombre;
+            document.getElementById('tipoEventoEstado').checked = tipo.estado;
+            document.getElementById('tipoEventoModal').style.display = 'block';
         } catch (error) {
-            console.error('Error cargando tipo de evento para editar:', error);
-            alert('Error al cargar tipo de evento');
+            console.error('Error cargando tipo de evento:', error);
         }
     }
 
     async deleteTipoEvento(id) {
-        if (confirm('¿Está seguro de que desea eliminar este tipo de evento?')) {
+        if (confirm('¿Eliminar tipo de evento?')) {
             try {
                 await EventoAPI.deleteTipoEvento(id);
                 await this.loadTipoEventosList();
-                alert('Tipo de evento eliminado exitosamente');
             } catch (error) {
-                console.error('Error eliminando tipo de evento:', error);
-                alert('Error al eliminar tipo de evento');
+                alert('Error eliminando tipo de evento');
             }
         }
     }
 
     async handleTipoEventoSubmit(e) {
         e.preventDefault();
-        const formData = new FormData(this.tipoEventoForm);
-        const idValue = formData.get('id') || document.getElementById('tipoEventoId').value;
+        const formData = new FormData(e.target);
         const tipoEvento = {
-            id: parseInt(idValue) || 0,
+            id: parseInt(formData.get('id')) || 0,
             nombre: formData.get('nombre'),
             estado: formData.has('estado'),
         };
@@ -393,63 +408,159 @@ class EventoUI {
         try {
             if (tipoEvento.id) {
                 await EventoAPI.updateTipoEvento(tipoEvento.id, tipoEvento);
-                alert('Tipo de evento actualizado exitosamente');
             } else {
                 await EventoAPI.createTipoEvento(tipoEvento);
-                alert('Tipo de evento creado exitosamente');
             }
             this.hideTipoEventoModal();
             await this.loadTipoEventosList();
-            await this.loadTipoEventos(); // reload the select options
         } catch (error) {
-            console.error('Error guardando tipo de evento:', error);
             alert(error.message);
         }
     }
 
     hideTipoEventoModal() {
-        this.tipoEventoModal.style.display = 'none';
+        document.getElementById('tipoEventoModal').style.display = 'none';
+    }
+
+    // Personas
+    async loadPersonasList() {
+        try {
+            this.personas = await EventoAPI.getPersonas();
+            this.renderPersonas();
+        } catch (error) {
+            console.error('Error cargando personas:', error);
+        }
+    }
+
+    renderPersonas() {
+        const body = document.getElementById('personasBody');
+        body.innerHTML = '';
+        this.personas.forEach(persona => {
+            const row = document.createElement('tr');
+            const generoTexto = persona.genero === 0 ? 'Masculino' : persona.genero === 1 ? 'Femenino' : 'Otro';
+            row.innerHTML = `
+                <td>${persona.id}</td>
+                <td>${persona.nombre}</td>
+                <td>${persona.telefono || ''}</td>
+                <td>${persona.email || ''}</td>
+                <td>${persona.fechaNacimiento ? new Date(persona.fechaNacimiento).toLocaleDateString() : ''}</td>
+                <td>${generoTexto}</td>
+                <td>${persona.estado ? 'Activo' : 'Inactivo'}</td>
+                <td>
+                    <button class="btn btn-edit">Editar</button>
+                    <button class="btn btn-delete">Eliminar</button>
+                </td>
+            `;
+            row.querySelector('.btn-edit').addEventListener('click', () => this.editPersona(persona.id));
+            row.querySelector('.btn-delete').addEventListener('click', () => this.deletePersona(persona.id));
+            body.appendChild(row);
+        });
+    }
+
+    showCreatePersonaForm() {
+        document.getElementById('personaFormTitle').textContent = 'Crear Persona';
+        document.getElementById('personaForm').reset();
+        document.getElementById('personaId').value = '';
+        document.getElementById('personaModal').style.display = 'block';
+    }
+
+    async editPersona(id) {
+        try {
+            const persona = await EventoAPI.getPersona(id);
+            document.getElementById('personaFormTitle').textContent = 'Editar Persona';
+            document.getElementById('personaId').value = persona.id;
+            document.getElementById('personaNombre').value = persona.nombre;
+            document.getElementById('personaTelefono').value = persona.telefono || '';
+            document.getElementById('personaEmail').value = persona.email || '';
+            document.getElementById('personaFechaNacimiento').value = persona.fechaNacimiento ? persona.fechaNacimiento.split('T')[0] : '';
+            document.getElementById('personaGenero').value = persona.genero;
+            document.getElementById('personaEstado').checked = persona.estado;
+            document.getElementById('personaModal').style.display = 'block';
+        } catch (error) {
+            console.error('Error cargando persona:', error);
+        }
+    }
+
+    async deletePersona(id) {
+        if (confirm('¿Eliminar persona?')) {
+            try {
+                await EventoAPI.deletePersona(id);
+                await this.loadPersonasList();
+            } catch (error) {
+                alert('Error eliminando persona');
+            }
+        }
+    }
+
+    async handlePersonaSubmit(e) {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const persona = {
+            id: parseInt(formData.get('id')) || 0,
+            nombre: formData.get('nombre'),
+            telefono: formData.get('telefono'),
+            email: formData.get('email'),
+            fechaNacimiento: formData.get('fechaNacimiento'),
+            genero: parseInt(formData.get('genero')) || 0,
+            estado: formData.has('estado'),
+        };
+
+        try {
+            if (persona.id) {
+                await EventoAPI.updatePersona(persona.id, persona);
+            } else {
+                await EventoAPI.createPersona(persona);
+            }
+            this.hidePersonaModal();
+            await this.loadPersonasList();
+        } catch (error) {
+            alert(error.message);
+        }
+    }
+
+    hidePersonaModal() {
+        document.getElementById('personaModal').style.display = 'none';
+    }
+
+    // Asistencias
+    async loadPersonas() {
+        try {
+            this.personas = await EventoAPI.getPersonas();
+            this.populatePersonaSelect();
+        } catch (error) {
+            console.error('Error cargando personas:', error);
+        }
+    }
+
+    populatePersonaSelect() {
+        const select = document.getElementById('asistenciaPersonaId');
+        select.innerHTML = '';
+        this.personas.forEach(persona => {
+            const option = document.createElement('option');
+            option.value = persona.id;
+            option.textContent = persona.nombre;
+            select.appendChild(option);
+        });
     }
 
     async loadAsistencias() {
         try {
             this.asistencias = await EventoAPI.getRegistroAsistencias();
             this.renderAsistencias();
-            this.populateAsistenciaSelects();
         } catch (error) {
             console.error('Error cargando asistencias:', error);
-            alert('Error al cargar asistencias');
         }
     }
 
-    populateAsistenciaSelects() {
-        // Populate evento select
-        this.asistenciaEventoSelect.innerHTML = '';
-        this.eventos.forEach(evento => {
-            const option = document.createElement('option');
-            option.value = evento.id;
-            option.textContent = evento.nombre;
-            this.asistenciaEventoSelect.appendChild(option);
-        });
-
-        // Populate persona select
-        this.asistenciaPersonaSelect.innerHTML = '';
-        this.personas.forEach(persona => {
-            const option = document.createElement('option');
-            option.value = persona.id;
-            option.textContent = persona.nombre;
-            this.asistenciaPersonaSelect.appendChild(option);
-        });
-    }
-
     renderAsistencias() {
-        this.asistenciasBody.innerHTML = '';
+        const body = document.getElementById('asistenciasBody');
+        body.innerHTML = '';
         this.asistencias.forEach(asistencia => {
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td>${asistencia.id}</td>
-                <td>${new Date(asistencia.fechaEntrada).toLocaleString()}</td>
-                <td>${asistencia.observacion}</td>
+                <td>${asistencia.fechaEntrada}</td>
+                <td>${asistencia.observacion || ''}</td>
                 <td>${asistencia.evento ? asistencia.evento.nombre : ''}</td>
                 <td>${asistencia.persona ? asistencia.persona.nombre : ''}</td>
                 <td>
@@ -457,56 +568,51 @@ class EventoUI {
                     <button class="btn btn-delete">Eliminar</button>
                 </td>
             `;
-            const editBtn = row.querySelector('.btn-edit');
-            const deleteBtn = row.querySelector('.btn-delete');
-            editBtn.addEventListener('click', () => this.editAsistencia(asistencia.id));
-            deleteBtn.addEventListener('click', () => this.deleteAsistencia(asistencia.id));
-            this.asistenciasBody.appendChild(row);
+            row.querySelector('.btn-edit').addEventListener('click', () => this.editAsistencia(asistencia.id));
+            row.querySelector('.btn-delete').addEventListener('click', () => this.deleteAsistencia(asistencia.id));
+            body.appendChild(row);
         });
     }
 
     showCreateAsistenciaForm() {
-        this.asistenciaFormTitle.textContent = 'Crear Asistencia';
-        this.asistenciaForm.reset();
+        document.getElementById('asistenciaFormTitle').textContent = 'Crear Asistencia';
+        document.getElementById('asistenciaForm').reset();
         document.getElementById('asistenciaId').value = '';
-        this.asistenciaModal.style.display = 'block';
+        document.getElementById('asistenciaModal').style.display = 'block';
     }
 
     async editAsistencia(id) {
         try {
             const asistencia = await EventoAPI.getRegistroAsistencia(id);
-            this.asistenciaFormTitle.textContent = 'Editar Asistencia';
+            document.getElementById('asistenciaFormTitle').textContent = 'Editar Asistencia';
             document.getElementById('asistenciaId').value = asistencia.id;
-            document.getElementById('asistenciaFechaEntrada').value = new Date(asistencia.fechaEntrada).toISOString().slice(0, 16);
-            document.getElementById('asistenciaObservacion').value = asistencia.observacion;
+            document.getElementById('asistenciaFechaEntrada').value = asistencia.fechaEntrada;
+            document.getElementById('asistenciaObservacion').value = asistencia.observacion || '';
             document.getElementById('asistenciaEventoId').value = asistencia.eventoId;
             document.getElementById('asistenciaPersonaId').value = asistencia.personaId;
-            this.asistenciaModal.style.display = 'block';
+            document.getElementById('asistenciaModal').style.display = 'block';
         } catch (error) {
-            console.error('Error cargando asistencia para editar:', error);
-            alert('Error al cargar asistencia');
+            console.error('Error cargando asistencia:', error);
         }
     }
 
     async deleteAsistencia(id) {
-        if (confirm('¿Está seguro de que desea eliminar esta asistencia?')) {
+        if (confirm('¿Eliminar asistencia?')) {
             try {
                 await EventoAPI.deleteRegistroAsistencia(id);
                 await this.loadAsistencias();
-                alert('Asistencia eliminada exitosamente');
             } catch (error) {
-                console.error('Error eliminando asistencia:', error);
-                alert('Error al eliminar asistencia');
+                alert('Error eliminando asistencia');
             }
         }
     }
 
     async handleAsistenciaSubmit(e) {
         e.preventDefault();
-        const formData = new FormData(this.asistenciaForm);
+        const formData = new FormData(e.target);
         const asistencia = {
             id: parseInt(formData.get('id')) || 0,
-            fechaEntrada: new Date(formData.get('fechaEntrada')).toISOString(),
+            fechaEntrada: formData.get('fechaEntrada'),
             observacion: formData.get('observacion'),
             eventoId: parseInt(formData.get('eventoId')),
             personaId: parseInt(formData.get('personaId')),
@@ -515,26 +621,19 @@ class EventoUI {
         try {
             if (asistencia.id) {
                 await EventoAPI.updateRegistroAsistencia(asistencia.id, asistencia);
-                alert('Asistencia actualizada exitosamente');
             } else {
                 await EventoAPI.createRegistroAsistencia(asistencia);
-                alert('Asistencia creada exitosamente');
             }
             this.hideAsistenciaModal();
             await this.loadAsistencias();
         } catch (error) {
-            console.error('Error guardando asistencia:', error);
             alert(error.message);
         }
     }
 
     hideAsistenciaModal() {
-        this.asistenciaModal.style.display = 'none';
-    }
-
-    hideModal() {
-        this.modal.style.display = 'none';
+        document.getElementById('asistenciaModal').style.display = 'none';
     }
 }
 
-const ui = new EventoUI();
+new App();
