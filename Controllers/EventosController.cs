@@ -21,6 +21,7 @@ namespace IaProyectoEventos.Controllers
         {
             return await _context.Eventos
                 .Include(e => e.TipoEvento)
+                .Include(e => e.Usuario)
                 .ToListAsync();
         }
 
@@ -29,6 +30,7 @@ namespace IaProyectoEventos.Controllers
         {
             var evento = await _context.Eventos
                 .Include(e => e.TipoEvento)
+                .Include(e => e.Usuario)
                 .FirstOrDefaultAsync(e => e.Id == id);
             if (evento == null) return NotFound();
             return evento;
@@ -39,6 +41,12 @@ namespace IaProyectoEventos.Controllers
         {
             var existsTipo = await _context.TipoEventos.AnyAsync(te => te.Id == evento.TipoEventoId);
             if (!existsTipo) return BadRequest($"TipoEventoId {evento.TipoEventoId} no existe");
+
+            if (evento.UsuarioId.HasValue)
+            {
+                var existsUsuario = await _context.Usuarios.AnyAsync(u => u.Id == evento.UsuarioId);
+                if (!existsUsuario) return BadRequest($"UsuarioId {evento.UsuarioId} no existe");
+            }
 
             _context.Eventos.Add(evento);
             await _context.SaveChangesAsync();
@@ -52,6 +60,12 @@ namespace IaProyectoEventos.Controllers
 
             var existsTipo = await _context.TipoEventos.AnyAsync(te => te.Id == evento.TipoEventoId);
             if (!existsTipo) return BadRequest($"TipoEventoId {evento.TipoEventoId} no existe");
+
+            if (evento.UsuarioId.HasValue)
+            {
+                var existsUsuario = await _context.Usuarios.AnyAsync(u => u.Id == evento.UsuarioId);
+                if (!existsUsuario) return BadRequest($"UsuarioId {evento.UsuarioId} no existe");
+            }
 
             _context.Entry(evento).State = EntityState.Modified;
             await _context.SaveChangesAsync();

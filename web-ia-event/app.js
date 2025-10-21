@@ -253,6 +253,7 @@ class App {
                 <td>${evento.horaInicio}</td>
                 <td>${evento.horaFin}</td>
                 <td>${evento.tipoEvento ? evento.tipoEvento.nombre : ''}</td>
+                <td>${evento.usuario ? evento.usuario.nombre : 'Sin asignar'}</td>
                 <td><span class="badge ${evento.estado ? 'bg-success' : 'bg-secondary'}">${evento.estado ? 'Activo' : 'Inactivo'}</span></td>
                 <td>
                     <button class="btn btn-sm btn-primary btn-edit"><i class="bi bi-pencil"></i> Editar</button>
@@ -311,6 +312,15 @@ class App {
     async handleSubmit(e) {
         e.preventDefault();
         const formData = new FormData(e.target);
+        
+        const usuarioId = this.currentUser ? (this.currentUser.usuarioId || this.currentUser.id) : null;
+        
+        if (!usuarioId) {
+            alert('Error: Usuario no autenticado correctamente. Por favor, vuelve a iniciar sesión.');
+            console.error('currentUser:', this.currentUser);
+            return;
+        }
+        
         const evento = {
             id: parseInt(formData.get('id')) || 0,
             nombre: formData.get('nombre'),
@@ -322,6 +332,7 @@ class App {
             horaInicio: formData.get('horaInicio'),
             horaFin: formData.get('horaFin'),
             tipoEventoId: parseInt(formData.get('tipoEventoId')),
+            usuarioId: usuarioId,
             estado: formData.has('estado'),
         };
 
