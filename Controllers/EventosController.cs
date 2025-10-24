@@ -1,7 +1,10 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using IaProyectoEventos.Data;
 using IaProyectoEventos.Models;
 using Microsoft.EntityFrameworkCore;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 
 namespace IaProyectoEventos.Controllers
 {
@@ -34,6 +37,23 @@ namespace IaProyectoEventos.Controllers
                 .FirstOrDefaultAsync(e => e.Id == id);
             if (evento == null) return NotFound();
             return evento;
+        }
+
+        [Authorize]
+        [HttpGet("usuario")]
+        public async Task<ActionResult<IEnumerable<Evento>>> GetEventosByUsuario()
+        {
+            var userIdClaim = User.FindFirst(JwtRegisteredClaimNames.Sub) ?? User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null) return Unauthorized();
+
+            if (!int.TryParse(userIdClaim.Value, out var usuarioId)) return Unauthorized();
+
+            return await _context.Eventos
+                .Include(e => e.TipoEvento)
+                .Include(e => e.Usuario)
+                .Where(e => e.UsuarioId == usuarioId)
+                .OrderByDescending(e => e.FechaInicio)
+                .ToListAsync();
         }
 
         [HttpPost]

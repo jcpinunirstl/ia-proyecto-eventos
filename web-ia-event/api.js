@@ -46,6 +46,19 @@ class EventoAPI {
         }
     }
 
+    static async getEventosUsuario() {
+        const response = await fetch(`${API_BASE_URL}/Eventos/usuario`, {
+            headers: {
+                ...this.getAuthHeaders(),
+            },
+        });
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Error al obtener eventos del usuario: ${errorText || response.statusText}`);
+        }
+        return await response.json();
+    }
+
     static async getEvento(id) {
         const response = await fetch(`${API_BASE_URL}/Eventos/${id}`);
         if (!response.ok) {

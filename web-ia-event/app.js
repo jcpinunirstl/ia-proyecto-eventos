@@ -247,7 +247,8 @@ class App {
 
     async loadEventos() {
         try {
-            this.eventos = await EventoAPI.getEventos();
+            const token = localStorage.getItem('jwtToken');
+            this.eventos = token ? await EventoAPI.getEventosUsuario() : await EventoAPI.getEventos();
             this.renderEventos();
             this.populateEventoSelect();
         } catch (error) {
