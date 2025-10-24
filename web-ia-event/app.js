@@ -68,10 +68,28 @@ class App {
 
     async loadPublicEvents() {
         try {
+            console.log('Iniciando carga de eventos públicos...');
             this.eventos = await EventoAPI.getEventos();
+            console.log('Eventos cargados exitosamente:', this.eventos);
             this.renderPublicEvents();
         } catch (error) {
             console.error('Error cargando eventos públicos:', error);
+            const list = document.getElementById('publicEventsList');
+            if (list) {
+                list.innerHTML = `
+                    <div class="alert alert-danger" role="alert">
+                        <h4 class="alert-heading">Error al cargar eventos</h4>
+                        <p>${error.message}</p>
+                        <hr>
+                        <p class="mb-0">
+                            <strong>Posibles soluciones:</strong><br>
+                            1. Verifica que el servidor API esté corriendo en http://localhost:5142<br>
+                            2. Abre la consola del navegador (F12) para más detalles<br>
+                            3. Revisa la configuración de CORS en el servidor
+                        </p>
+                    </div>
+                `;
+            }
         }
     }
 

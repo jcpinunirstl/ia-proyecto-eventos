@@ -1,4 +1,27 @@
-const API_BASE_URL = 'http://localhost:5142/api';
+// Detectar entorno y configurar URL base del API
+const getApiBaseUrl = () => {
+    // Si estamos en file:// (abriendo directamente el HTML), usar localhost:5142
+    if (window.location.protocol === 'file:') {
+        return 'http://localhost:5142/api';
+    }
+    
+    // Si hay un servidor web sirviendo en cualquier puerto, usar URL absoluta
+    // Solo usar ruta relativa si explícitamente estamos en producción con variable
+    const isProduction = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+    
+    if (isProduction) {
+        return '/api';  // En producción/Docker usar proxy
+    }
+    
+    // En desarrollo local, siempre usar URL completa
+    return 'http://localhost:5142/api';
+};
+
+const API_BASE_URL = getApiBaseUrl();
+console.log('API Base URL configurada:', API_BASE_URL);
+console.log('Hostname:', window.location.hostname);
+console.log('Port:', window.location.port);
+console.log('Protocol:', window.location.protocol);
 
 class EventoAPI {
     static getAuthHeaders() {
@@ -6,11 +29,21 @@ class EventoAPI {
         return token ? { 'Authorization': `Bearer ${token}` } : {};
     }
     static async getEventos() {
-        const response = await fetch(`${API_BASE_URL}/Eventos`);
-        if (!response.ok) {
-            throw new Error('Error al obtener eventos');
+        try {
+            console.log('Obteniendo eventos desde:', `${API_BASE_URL}/Eventos`);
+            const response = await fetch(`${API_BASE_URL}/Eventos`);
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Error del servidor:', errorText);
+                throw new Error(`Error al obtener eventos: ${response.status} - ${errorText}`);
+            }
+            const data = await response.json();
+            console.log('Eventos obtenidos:', data.length);
+            return data;
+        } catch (error) {
+            console.error('Error al obtener eventos:', error);
+            throw error;
         }
-        return await response.json();
     }
 
     static async getEvento(id) {
