@@ -2,7 +2,7 @@
 # Script para ejecutar pruebas k6 localmente en Linux/Mac
 # Requiere: k6 instalado (https://k6.io/docs/getting-started/installation)
 
-BASE_URL="${BASE_URL:-http://localhost:7142}"
+BASE_URL="${BASE_URL:-http://localhost:5142}"
 TEST_USERNAME="${TEST_USERNAME:-testuser}"
 TEST_PASSWORD="${TEST_PASSWORD:-TestPassword123!}"
 
